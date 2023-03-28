@@ -8,8 +8,9 @@ import type { RouterOutputs } from "~/utils/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
-import { LoadingPage } from "~/components/loading";
+import { LoadingPage, LoadingSpinner } from "~/components/loading";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 dayjs.extend(relativeTime);
 
@@ -23,6 +24,14 @@ const CreatePostWizard = () => {
     onSuccess: () => {
       setInput("");
       void ctx.posts.getAll.invalidate();
+    },
+    onError: (err) => {
+      const errorMessage = err.data?.zodError?.fieldErrors.content;
+      if (errorMessage && errorMessage[0]) {
+        toast.error(errorMessage[0]);
+      } else {
+        toast.error("Failed to post! Please try again later.");
+      }
     },
   });
 
@@ -42,17 +51,31 @@ const CreatePostWizard = () => {
         className="flex-grow bg-transparent outline-none"
         placeholder="Type some emojis!"
         value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-      <button
-        className={`rounded-full bg-blue-400 px-4 py-2 font-bold text-white hover:bg-blue-500 disabled:pointer-events-none disabled:opacity-50 disabled:hover:bg-blue-400`}
-        onClick={() => {
-          mutate({ content: input });
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (input !== "") mutate({ content: input });
+          }
         }}
-        disabled={input.length === 0 || input.length > 280 || isPosting}
-      >
-        Tweet Emoji
-      </button>
+        onChange={(e) => setInput(e.target.value)}
+        disabled={isPosting}
+      />
+      {input !== "" && !isPosting && (
+        <button
+          className={`rounded-full bg-blue-400 px-4 py-2 font-bold text-white hover:bg-blue-500 disabled:pointer-events-none disabled:opacity-50 disabled:hover:bg-blue-400`}
+          onClick={() => {
+            mutate({ content: input });
+          }}
+          disabled={isPosting}
+        >
+          Tweet Emoji
+        </button>
+      )}
+      {isPosting && (
+        <div className="flex w-32 items-center justify-center">
+          <LoadingSpinner size={20} />
+        </div>
+      )}
     </div>
   );
 };
