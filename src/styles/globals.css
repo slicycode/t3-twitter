@@ -4,4 +4,20 @@
 
 body {
   @apply bg-black text-slate-100;
+
+  overscroll-behavior: none;
+}
+
+/* change scrollbar style */
+::-webkit-scrollbar {
+  width: 0.25rem;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #95a0af;
+  border-radius: 0.5rem;
 }
