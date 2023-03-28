@@ -9,16 +9,27 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
 import { LoadingPage } from "~/components/loading";
+import { useState } from "react";
 
 dayjs.extend(relativeTime);
 
 const CreatePostWizard = () => {
   const { user } = useUser();
+  const [input, setInput] = useState("");
+
+  const ctx = api.useContext();
+
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: () => {
+      setInput("");
+      void ctx.posts.getAll.invalidate();
+    },
+  });
 
   if (!user) return null;
 
   return (
-    <div className="flex w-full gap-3">
+    <div className="flex w-full items-center gap-3">
       <Image
         src={user.profileImageUrl}
         alt="Profile Picture"
@@ -30,7 +41,18 @@ const CreatePostWizard = () => {
         type="text"
         className="flex-grow bg-transparent outline-none"
         placeholder="Type some emojis!"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
       />
+      <button
+        className={`rounded-full bg-blue-400 px-4 py-2 font-bold text-white hover:bg-blue-500 disabled:pointer-events-none disabled:opacity-50 disabled:hover:bg-blue-400`}
+        onClick={() => {
+          mutate({ content: input });
+        }}
+        disabled={input.length === 0 || input.length > 280 || isPosting}
+      >
+        Tweet Emoji
+      </button>
     </div>
   );
 };
@@ -71,7 +93,7 @@ const Feed = () => {
 
   return (
     <div className="flex flex-col">
-      {data?.map((fullPost) => (
+      {data.map((fullPost) => (
         <PostView {...fullPost} key={fullPost.post.id} />
       ))}
     </div>
